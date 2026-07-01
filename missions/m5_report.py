@@ -52,7 +52,22 @@ def run(verbose: bool = True) -> dict:
         "best_region": min(sustainability.REGION_CARBON, key=sustainability.REGION_CARBON.get),
     }
 
-    md = report.build_report(baseline, optimized, levers, sustainability=sust)
+    extensions = {
+        "cache_economics": r2.get("cache_economics", {}),
+        "reasoning_budget": r2.get("reasoning_budget", {}),
+    }
+    analysis = {
+        "util_lie_gpus": [lie["gpu_id"] for lie in r1["lies"]],
+        "top_lever": max(levers, key=levers.get),
+    }
+    md = report.build_report(
+        baseline,
+        optimized,
+        levers,
+        sustainability=sust,
+        extensions=extensions,
+        analysis=analysis,
+    )
     out_md = os.path.join(ROOT, "outputs", "report.md")
     os.makedirs(os.path.dirname(out_md), exist_ok=True)
     with open(out_md, "w") as f:
@@ -65,7 +80,8 @@ def run(verbose: bool = True) -> dict:
         print(f"\nWritten: outputs/report.md" + (f" + outputs/savings.png" if png else " (matplotlib absent: PNG skipped)"))
 
     return {"baseline_monthly": round(baseline), "optimized_monthly": round(optimized),
-            "levers": levers, "total_savings_pct": round(total_pct, 1)}
+            "levers": levers, "total_savings_pct": round(total_pct, 1),
+            "extensions": extensions, "analysis": analysis}
 
 
 if __name__ == "__main__":
